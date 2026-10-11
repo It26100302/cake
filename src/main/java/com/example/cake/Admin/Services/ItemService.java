@@ -89,35 +89,11 @@ public class ItemService {
             String category,
             String availability,
             MultipartFile imageFile) throws IOException {
-        if (name == null || name.isBlank() || description == null || description.isBlank()) {
-            throw new IllegalArgumentException("Name and description are required.");
-        }
-        if (flavor == null || flavor.isBlank() || size == null || size.isBlank()
-                || category == null || category.isBlank()
-                || availability == null || availability.isBlank()) {
-            throw new IllegalArgumentException("Flavor, size, category, and availability are required.");
-        }
-        if (!Double.isFinite(price) || price < 0) {
-            throw new IllegalArgumentException("Price must be a valid non-negative amount.");
-        }
-        if (shape < 0 || shape > 3) {
-            throw new IllegalArgumentException("Choose a valid item shape.");
-        }
+        validateItem(name, description, flavor, size, price, shape, category, availability);
         if (imageFile == null || imageFile.isEmpty()) {
             throw new IllegalArgumentException("Please choose an item image.");
         }
-        if (imageFile.getSize() > MAX_IMAGE_SIZE) {
-            throw new IllegalArgumentException("The image must be 5 MB or smaller.");
-        }
-
-        String extension = switch (imageFile.getContentType() == null
-                ? ""
-                : imageFile.getContentType().toLowerCase(Locale.ROOT)) {
-            case "image/jpeg" -> ".jpg";
-            case "image/png" -> ".png";
-            case "image/webp" -> ".webp";
-            default -> throw new IllegalArgumentException("Choose a JPG, PNG, or WEBP image.");
-        };
+        String extension = imageExtension(imageFile);
         String imageFilename = UUID.randomUUID() + extension;
         String id = UUID.randomUUID().toString();
         Files.createDirectories(imageDirectory);
@@ -128,28 +104,70 @@ public class ItemService {
             Files.copy(inputStream, imagePath, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        String record = String.join(";",
-                encode(id),
-                encode(name.trim()),
-                encode(description.trim()),
-                encode(flavor.trim()),
-                encode(size.trim()),
-                encode(Double.toString(price)),
-                encode(Integer.toString(shape)),
-                encode(category.trim()),
-                encode(availability.trim()),
-                encode(imageFilename)) + System.lineSeparator();
+        Item item = new Item(id, name.trim(), description.trim(), flavor.trim(), size.trim(),
+                price, shape, category.trim(), availability.trim(), IMAGE_URL_PREFIX + imageFilename);
         try {
-            Files.writeString(
-                    databaseFile,
-                    record,
-                    StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.APPEND);
+            Files.writeString(databaseFile, itemRecord(item) + System.lineSeparator(),
+                    StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException exception) {
             Files.deleteIfExists(imagePath);
             throw exception;
         }
+    }
+
+    public boolean updateItem(
+            String id,
+            String name,
+            String description,
+            String flavor,
+            String size,
+            double price,
+            int shape,
+            String category,
+            String availability,
+            MultipartFile imageFile) throws IOException {
+        validateItem(name, description, flavor, size, price, shape, category, availability);
+        List<Item> items = findAllItems();
+        int itemIndex = -1;
+        for (int index = 0; index < items.size(); index++) {
+            if (items.get(index).getId().equals(id)) {
+                itemIndex = index;
+                break;
+            }
+        }
+        if (itemIndex < 0) {
+            return false;
+        }
+
+        Item existingItem = items.get(itemIndex);
+        String previousImageFilename = imageFilename(existingItem.getImageUrl());
+        String updatedImageFilename = previousImageFilename;
+        Path newImagePath = null;
+        if (imageFile != null && !imageFile.isEmpty()) {
+            updatedImageFilename = UUID.randomUUID() + imageExtension(imageFile);
+            Files.createDirectories(imageDirectory);
+            newImagePath = imageDirectory.resolve(updatedImageFilename);
+            try (var inputStream = imageFile.getInputStream()) {
+                Files.copy(inputStream, newImagePath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+
+        Item updatedItem = new Item(id, name.trim(), description.trim(), flavor.trim(), size.trim(),
+                price, shape, category.trim(), availability.trim(), IMAGE_URL_PREFIX + updatedImageFilename);
+        items.set(itemIndex, updatedItem);
+        try {
+            writeItems(items);
+        } catch (IOException exception) {
+            if (newImagePath != null) {
+                Files.deleteIfExists(newImagePath);
+            }
+            throw exception;
+        }
+
+        if (!previousImageFilename.equals(updatedImageFilename)) {
+            Files.deleteIfExists(imageDirectory.resolve(previousImageFilename).normalize());
+        }
+        return true;
     }
 
     public boolean deleteItem(String id) throws IOException {
@@ -165,18 +183,7 @@ public class ItemService {
         items.remove(itemToDelete);
         List<String> records = new ArrayList<>(items.size());
         for (Item item : items) {
-            String imageFilename = item.getImageUrl().substring(IMAGE_URL_PREFIX.length());
-            records.add(String.join(";",
-                    encode(item.getId()),
-                    encode(item.getName()),
-                    encode(item.getDescription()),
-                    encode(item.getFlavor()),
-                    encode(item.getSize()),
-                    encode(Double.toString(item.getPrice())),
-                    encode(Integer.toString(item.getShape())),
-                    encode(item.getCategory()),
-                    encode(item.getAvailability()),
-                    encode(imageFilename)));
+            records.add(itemRecord(item));
         }
 
         Files.write(
@@ -189,6 +196,91 @@ public class ItemService {
         String imageFilename = itemToDelete.getImageUrl().substring(IMAGE_URL_PREFIX.length());
         Files.deleteIfExists(imageDirectory.resolve(imageFilename).normalize());
         return true;
+    }
+
+    private void validateItem(
+            String name,
+            String description,
+            String flavor,
+            String size,
+            double price,
+            int shape,
+            String category,
+            String availability) {
+        if (name == null || name.isBlank() || description == null || description.isBlank()) {
+            throw new IllegalArgumentException("Name and description are required.");
+        }
+        if (flavor == null || flavor.isBlank() || size == null || size.isBlank()
+                || category == null || category.isBlank()
+                || availability == null || availability.isBlank()) {
+            throw new IllegalArgumentException("Flavor, size, category, and availability are required.");
+        }
+        if (!Double.isFinite(price) || price < 0) {
+            throw new IllegalArgumentException("Price must be a valid non-negative amount.");
+        }
+        if (shape < 0 || shape > 3) {
+            throw new IllegalArgumentException("Choose a valid item shape.");
+        }
+    }
+
+    private String imageExtension(MultipartFile imageFile) {
+        if (imageFile.getSize() > MAX_IMAGE_SIZE) {
+            throw new IllegalArgumentException("The image must be 5 MB or smaller.");
+        }
+        return switch (imageFile.getContentType() == null
+                ? ""
+                : imageFile.getContentType().toLowerCase(Locale.ROOT)) {
+            case "image/jpeg" -> ".jpg";
+            case "image/png" -> ".png";
+            case "image/webp" -> ".webp";
+            default -> throw new IllegalArgumentException("Choose a JPG, PNG, or WEBP image.");
+        };
+    }
+
+    private String imageFilename(String imageUrl) throws IOException {
+        if (imageUrl == null || !imageUrl.startsWith(IMAGE_URL_PREFIX)) {
+            throw new IOException("Invalid item image path in " + databaseFile);
+        }
+        String filename = imageUrl.substring(IMAGE_URL_PREFIX.length());
+        if (filename.isBlank() || filename.equals(".") || filename.equals("..")
+                || filename.contains("/") || filename.contains("\\")) {
+            throw new IOException("Invalid item image path in " + databaseFile);
+        }
+        return filename;
+    }
+
+    private String itemRecord(Item item) throws IOException {
+        return String.join(";",
+                encode(item.getId()),
+                encode(item.getName()),
+                encode(item.getDescription()),
+                encode(item.getFlavor()),
+                encode(item.getSize()),
+                encode(Double.toString(item.getPrice())),
+                encode(Integer.toString(item.getShape())),
+                encode(item.getCategory()),
+                encode(item.getAvailability()),
+                encode(imageFilename(item.getImageUrl())));
+    }
+
+    private void writeItems(List<Item> items) throws IOException {
+        Files.createDirectories(dataDirectory);
+        Path temporaryFile = Files.createTempFile(dataDirectory, "items-", ".tmp");
+        try {
+            List<String> records = new ArrayList<>(items.size());
+            for (Item item : items) {
+                records.add(itemRecord(item));
+            }
+            Files.write(temporaryFile, records, StandardCharsets.UTF_8);
+            try {
+                Files.move(temporaryFile, databaseFile, StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING);
+            } catch (java.nio.file.AtomicMoveNotSupportedException exception) {
+                Files.move(temporaryFile, databaseFile, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temporaryFile);
+        }
     }
 
     private String encode(String value) {

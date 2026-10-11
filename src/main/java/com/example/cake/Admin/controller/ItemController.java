@@ -34,9 +34,7 @@ public class ItemController {
     @GetMapping("/api/items")
     @ResponseBody
     public List<Item> storefrontItems() throws IOException {
-        return itemService.findAllItems().stream()
-                .filter(item -> "available".equalsIgnoreCase(item.getAvailability().trim()))
-                .toList();
+        return itemService.findAllItems();
     }
 
     @PostMapping("/admin/items/upload")
@@ -75,6 +73,52 @@ public class ItemController {
         } catch (IOException exception) {
             logger.error("Failed to save bakery item", exception);
             redirectAttributes.addFlashAttribute("itemMessage", "The item could not be saved. Please try again.");
+            redirectAttributes.addFlashAttribute("itemMessageType", "error");
+        }
+        return "redirect:/item";
+    }
+
+    @PostMapping("/admin/items/update")
+    public String updateItem(
+            @RequestParam String id,
+            @RequestParam String name,
+            @RequestParam String description,
+            @RequestParam String flavor,
+            @RequestParam String size,
+            @RequestParam String price,
+            @RequestParam String shape,
+            @RequestParam String category,
+            @RequestParam String availability,
+            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+            RedirectAttributes redirectAttributes) {
+        try {
+            boolean updated = itemService.updateItem(
+                    id,
+                    name,
+                    description,
+                    flavor,
+                    size,
+                    Double.parseDouble(price),
+                    Integer.parseInt(shape),
+                    category,
+                    availability,
+                    imageFile);
+            if (updated) {
+                redirectAttributes.addFlashAttribute("itemMessage", "Item updated successfully.");
+                redirectAttributes.addFlashAttribute("itemMessageType", "success");
+            } else {
+                redirectAttributes.addFlashAttribute("itemMessage", "Item was not found; no changes were made.");
+                redirectAttributes.addFlashAttribute("itemMessageType", "error");
+            }
+        } catch (NumberFormatException exception) {
+            redirectAttributes.addFlashAttribute("itemMessage", "Enter a valid price and shape.");
+            redirectAttributes.addFlashAttribute("itemMessageType", "error");
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute("itemMessage", exception.getMessage());
+            redirectAttributes.addFlashAttribute("itemMessageType", "error");
+        } catch (IOException exception) {
+            logger.error("Failed to update bakery item with id {}", id, exception);
+            redirectAttributes.addFlashAttribute("itemMessage", "The item could not be updated. Please try again.");
             redirectAttributes.addFlashAttribute("itemMessageType", "error");
         }
         return "redirect:/item";

@@ -293,6 +293,70 @@
 
     .delete-button { background: #b44343; }
 
+    .item-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .update-panel {
+      margin-top: 14px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+    }
+
+    .item-actions .update-panel {
+      margin-top: 0;
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .update-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 9px 14px;
+      border: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #fa7c8a, #fd344a);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .update-button::-webkit-details-marker { display: none; }
+
+    .update-button::before {
+      content: "＋";
+      margin-right: 7px;
+    }
+
+    .update-panel[open] .update-button::before { content: "−"; }
+
+    .update-form {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .update-form .field input,
+    .update-form .field textarea {
+      padding: 9px 10px;
+      font-size: 0.88rem;
+    }
+
+    .update-form .field textarea { min-height: 72px; }
+
+    .current-image-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+
     .message {
       margin: 18px 0 0;
       padding: 12px 15px;
@@ -526,10 +590,67 @@
                   <div><dt>Category</dt><dd th:text="${item.category} ?: 'Cake'">Cake</dd></div>
                   <div><dt>Availability</dt><dd th:text="${item.availability} ?: 'Available'">Available</dd></div>
                 </dl>
-                <form th:action="@{/admin/items/delete}" method="post">
-                  <input type="hidden" name="id" th:value="${item.id}">
-                  <button class="delete-button" type="submit">Delete item</button>
-                </form>
+                <div class="item-actions">
+                  <details class="update-panel">
+                    <summary class="update-button">Update item</summary>
+                    <form class="update-form"
+                          th:action="@{/admin/items/update}"
+                          method="post"
+                          enctype="multipart/form-data">
+                      <input type="hidden" name="id" th:value="${item.id}">
+                      <div class="field">
+                        <label th:for="${'edit-name-' + item.id}">Item name</label>
+                        <input th:id="${'edit-name-' + item.id}" name="name" th:value="${item.name}" maxlength="120" required>
+                      </div>
+                      <div class="field">
+                        <label th:for="${'edit-description-' + item.id}">Description</label>
+                        <textarea th:id="${'edit-description-' + item.id}" name="description" th:text="${item.description}" maxlength="1000" required></textarea>
+                      </div>
+                      <div class="field">
+                        <label th:for="${'edit-flavor-' + item.id}">Flavor</label>
+                        <input th:id="${'edit-flavor-' + item.id}" name="flavor" th:value="${item.flavor}" maxlength="80" required>
+                      </div>
+                      <div class="field">
+                        <label th:for="${'edit-size-' + item.id}">Size</label>
+                        <input th:id="${'edit-size-' + item.id}" name="size" th:value="${item.size}" maxlength="80" required>
+                      </div>
+                      <div class="field">
+                        <label th:for="${'edit-price-' + item.id}">Price</label>
+                        <input th:id="${'edit-price-' + item.id}" name="price" type="number" min="0" step="0.01" th:value="${item.price}" required>
+                      </div>
+                      <div class="field">
+                        <label th:for="${'edit-shape-' + item.id}">Shape</label>
+                        <select th:id="${'edit-shape-' + item.id}" name="shape" required>
+                          <option value="0" th:selected="${item.shape == 0}">Round</option>
+                          <option value="1" th:selected="${item.shape == 1}">Square</option>
+                          <option value="2" th:selected="${item.shape == 2}">Heart</option>
+                          <option value="3" th:selected="${item.shape == 3}">Custom</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label th:for="${'edit-category-' + item.id}">Category</label>
+                        <input th:id="${'edit-category-' + item.id}" name="category" th:value="${item.category}" maxlength="80" required>
+                      </div>
+                      <div class="field">
+                        <label th:for="${'edit-availability-' + item.id}">Availability</label>
+                        <select th:id="${'edit-availability-' + item.id}" name="availability" required>
+                          <option value="Available" th:selected="${item.availability == 'Available'}">Available</option>
+                          <option value="Unavailable" th:selected="${item.availability == 'Unavailable'}">Unavailable</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label th:for="${'edit-image-' + item.id}">Replace image (optional)</label>
+                        <p class="current-image-note">Leave empty to keep the current image.</p>
+                        <input th:id="${'edit-image-' + item.id}" name="imageFile" type="file" accept="image/png,image/jpeg,image/webp">
+                      </div>
+                      <button class="primary-button" type="submit">Save changes</button>
+                    </form>
+                  </details>
+                  <form th:action="@{/admin/items/delete}" method="post">
+                    <input type="hidden" name="id" th:value="${item.id}">
+                    <button class="delete-button" type="submit">Delete item</button>
+                  </form>
+                </div>
               </div>
             </article>
             <p class="empty-state" th:if="${#lists.isEmpty(items)}">No items have been added yet.</p>

@@ -323,6 +323,26 @@
             margin-bottom: 0.35rem;
         }
 
+        .cake-availability {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            margin-bottom: 0.55rem;
+            padding: 0.28rem 0.65rem;
+            border: 1px solid #b9e4ce;
+            border-radius: var(--radius-pill, 9999px);
+            background: #edf9f2;
+            color: #176b43;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+
+        .cake-availability.unavailable {
+            border-color: #f2c1c1;
+            background: #fff0f0;
+            color: #a52f26;
+        }
+
         .cake-card-name {
             font-family: var(--font-heading, 'Playfair Display', Georgia, serif);
             font-size: 1.22rem;
@@ -484,9 +504,49 @@
            2-Column Grid on Desktop (Form on left 65%, Sticky Booking Summary on right 35%)
            -------------------------------------------------------------------------- */
         .custom-builder-section {
+            display: none;
             background: #FFFFFF;
             border-top: 1px solid var(--color-border);
             border-bottom: 1px solid var(--color-border);
+        }
+
+        .custom-builder-section:target {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: block;
+            overflow-y: auto;
+            padding: 1.5rem 1rem;
+            background: rgba(44, 30, 22, 0.58);
+        }
+
+        .custom-builder-section:target .section-container {
+            position: relative;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+            border: 1px solid var(--color-border);
+            border-radius: 24px;
+            background: #FFFFFF;
+            box-shadow: 0 20px 60px rgba(44, 30, 22, 0.25);
+        }
+
+        .custom-builder-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--color-border);
+            border-radius: 50%;
+            color: var(--color-dark-roast);
+            background: #FFFFFF;
+            font-size: 1.4rem;
+            text-decoration: none;
         }
 
         .builder-layout-grid {
@@ -515,6 +575,14 @@
         @media (max-width: 600px) {
             .builder-form-card {
                 padding: 1.5rem 1.25rem;
+            }
+
+            .custom-builder-section:target {
+                padding: 0.5rem;
+            }
+
+            .custom-builder-section:target .section-container {
+                padding: 1.25rem 0.85rem;
             }
         }
 
@@ -572,6 +640,10 @@
             gap: 0.85rem;
         }
 
+        .option-select-card:has(input[type="checkbox"]) {
+            cursor: pointer;
+        }
+
         .option-select-card {
             background: #FDF9F5;
             border: 1.5px solid var(--color-border, #EADBCE);
@@ -598,6 +670,26 @@
             border-color: var(--color-strawberry, #C92C3D);
             background: #FFF0F3;
             box-shadow: 0 0 0 3px rgba(201, 44, 61, 0.15);
+        }
+
+        .option-select-card:has(input[type="radio"]:checked),
+        .option-select-card:has(input[type="checkbox"]:checked) {
+            border-color: var(--color-strawberry, #C92C3D);
+            background: #FFF0F3;
+            box-shadow: 0 0 0 3px rgba(201, 44, 61, 0.15);
+        }
+
+        .option-select-card input[type="radio"],
+        .option-select-card input[type="checkbox"] {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+
+        .option-select-card:focus-within {
+            outline: 2px solid var(--color-strawberry, #C92C3D);
+            outline-offset: 2px;
         }
 
         .option-icon {
@@ -633,6 +725,12 @@
 
         .builder-group {
             margin-bottom: 1.25rem;
+        }
+
+        .builder-form-card fieldset {
+            border: 0;
+            min-width: 0;
+            padding: 0;
         }
 
         .builder-label {
@@ -716,12 +814,8 @@
         }
 
         .file-upload-box input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
-            height: 100%;
-            opacity: 0;
+            margin-top: 1rem;
             cursor: pointer;
         }
 
@@ -1338,6 +1432,7 @@
          ====================================================================== -->
     <section class="custom-builder-section" id="custom-cake-builder">
         <div class="section-container">
+            <a class="custom-builder-close" href="#" aria-label="Close custom cake form">&times;</a>
             <div class="section-header-block">
                 <span class="section-badge-pill" style="background:#FFF5E6; border-color:#F5DEB3; color:#B8860B;">✨ Bespoke Studio</span>
                 <h2 class="section-title-large">Create Your Custom Cake</h2>
@@ -1350,15 +1445,8 @@
                 
                 <!-- Left Column: Interactive Multi-Step Builder Form -->
                 <div class="builder-form-card">
-                    <form action="/api/cakes" method="POST" enctype="multipart/form-data" id="customCakeForm" onsubmit="return handleCustomCakeSubmit(event)">
-                        <input type="hidden" name="action" value="create">
-                        <input type="hidden" name="shape" id="formShapeVal" value="Round">
-                        <input type="hidden" name="flavor" id="formFlavorVal" value="Vanilla">
-                        <input type="hidden" name="filling" id="formFillingVal" value="Vanilla Cream">
-                        <input type="hidden" name="decoration" id="formDecorationVal" value="Floral Style">
-                        <input type="hidden" name="cakeSize" id="formSizeVal" value="Medium">
-                        <input type="hidden" name="estimatedPrice" id="formEstimatedPrice" value="6800.00">
-                        <input type="hidden" name="referenceImageUrl" id="formRefImageUrl" value="Customise cake/Round Vanila cake.png">
+                    <form action="/api/custom-orders/submit" method="POST" enctype="multipart/form-data" id="customCakeForm">
+                        <input type="hidden" name="estimatedTotal" value="To be confirmed">
 
                         <!-- STEP 1 — CHOOSE SHAPE -->
                         <div class="step-block" id="builderStep1">
@@ -1368,26 +1456,30 @@
                                 <span class="step-hint">Step 1 of 9</span>
                             </div>
                             <div class="option-cards-grid">
-                                <div class="option-select-card selected" onclick="selectShape('Round', 'Customise cake/Round Vanila cake.png', this)">
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeShape" value="Round" checked required>
                                     <span class="option-icon">⭕</span>
                                     <span class="option-name">Round</span>
                                     <span class="option-sub">Classic Timeless</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectShape('Square', 'Customise cake/Square vanila cake.png', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeShape" value="Square">
                                     <span class="option-icon">⬛</span>
                                     <span class="option-name">Square</span>
                                     <span class="option-sub">Modern Sharp</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectShape('Heart', 'Customise cake/Heart Vanila cake.png', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeShape" value="Heart">
                                     <span class="option-icon">💖</span>
                                     <span class="option-name">Heart</span>
                                     <span class="option-sub">Sweet Romantic</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectShape('Tiered', '3-orader bakery items or custom cake booking/base.png', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeShape" value="Tiered">
                                     <span class="option-icon">🎂</span>
                                     <span class="option-name">Tiered</span>
                                     <span class="option-sub">Grand Gala</span>
-                                </div>
+                                </label>
                             </div>
                         </div>
 
@@ -1399,31 +1491,36 @@
                                 <span class="step-hint">Step 2 of 9</span>
                             </div>
                             <div class="option-cards-grid">
-                                <div class="option-select-card selected" onclick="selectFlavor('Vanilla', this)">
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeFlavor" value="Vanilla" checked required>
                                     <span class="option-icon">🍦</span>
                                     <span class="option-name">Vanilla</span>
                                     <span class="option-sub">Madagascar Bean</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectFlavor('Chocolate', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeFlavor" value="Chocolate">
                                     <span class="option-icon">🍫</span>
                                     <span class="option-name">Chocolate</span>
                                     <span class="option-sub">Rich Belgian</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectFlavor('Strawberry', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeFlavor" value="Strawberry">
                                     <span class="option-icon">🍓</span>
                                     <span class="option-name">Strawberry</span>
                                     <span class="option-sub">Berry Coulis</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectFlavor('Red Velvet', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeFlavor" value="Red Velvet">
                                     <span class="option-icon">🌹</span>
                                     <span class="option-name">Red Velvet</span>
                                     <span class="option-sub">Velvety Cream</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectFlavor('Black Forest', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeFlavor" value="Black Forest">
                                     <span class="option-icon">🍒</span>
                                     <span class="option-name">Black Forest</span>
                                     <span class="option-sub">Cherry Shavings</span>
-                                </div>
+                                </label>
                             </div>
                         </div>
 
@@ -1435,31 +1532,36 @@
                                 <span class="step-hint">Step 3 of 9</span>
                             </div>
                             <div class="option-cards-grid">
-                                <div class="option-select-card selected" onclick="selectFilling('Vanilla Cream', this)">
+                                <label class="option-select-card">
+                                    <input type="radio" name="filling" value="Vanilla Cream" checked required>
                                     <span class="option-icon">🥛</span>
                                     <span class="option-name">Vanilla Cream</span>
                                     <span class="option-sub">Light &amp; Fluffy</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectFilling('Chocolate Cream', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="filling" value="Chocolate Cream">
                                     <span class="option-icon">🧁</span>
                                     <span class="option-name">Chocolate Cream</span>
                                     <span class="option-sub">Silky Cocoa</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectFilling('Strawberry Filling', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="filling" value="Strawberry Filling">
                                     <span class="option-icon">🍓</span>
                                     <span class="option-name">Strawberry Filling</span>
                                     <span class="option-sub">Sweet Berry</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectFilling('Buttercream', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="filling" value="Buttercream">
                                     <span class="option-icon">🧈</span>
                                     <span class="option-name">Buttercream</span>
                                     <span class="option-sub">Traditional Rich</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectFilling('Chocolate Ganache', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="filling" value="Chocolate Ganache">
                                     <span class="option-icon">🍫</span>
                                     <span class="option-name">Chocolate Ganache</span>
                                     <span class="option-sub">Velvet Truffle</span>
-                                </div>
+                                </label>
                             </div>
                         </div>
 
@@ -1471,36 +1573,42 @@
                                 <span class="step-hint">Step 4 of 9</span>
                             </div>
                             <div class="option-cards-grid">
-                                <div class="option-select-card selected" onclick="selectDecoration('Floral Style', this)">
+                                <label class="option-select-card">
+                                    <input type="radio" name="decoration" value="Floral Style" checked required>
                                     <span class="option-icon">🌸</span>
                                     <span class="option-name">Floral</span>
                                     <span class="option-sub">Delicate Blooms</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectDecoration('Minimal Style', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="decoration" value="Minimal Style">
                                     <span class="option-icon">✨</span>
                                     <span class="option-name">Minimal</span>
                                     <span class="option-sub">Sleek Aesthetics</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectDecoration('Birthday Style', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="decoration" value="Birthday Style">
                                     <span class="option-icon">🎈</span>
                                     <span class="option-name">Birthday</span>
                                     <span class="option-sub">Festive Sprinkles</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectDecoration('Elegant Style', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="decoration" value="Elegant Style">
                                     <span class="option-icon">👑</span>
                                     <span class="option-name">Elegant</span>
                                     <span class="option-sub">Gold Leaf Touches</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectDecoration('Romantic Style', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="decoration" value="Romantic Style">
                                     <span class="option-icon">💕</span>
                                     <span class="option-name">Romantic</span>
                                     <span class="option-sub">Heart Pipings</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectDecoration('Wedding Style', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="decoration" value="Wedding Style">
                                     <span class="option-icon">💍</span>
                                     <span class="option-name">Wedding Style</span>
                                     <span class="option-sub">Luxury Tiered</span>
-                                </div>
+                                </label>
                             </div>
                         </div>
 
@@ -1512,30 +1620,30 @@
                                 <span class="step-hint">Step 5 of 9</span>
                             </div>
                             <div class="option-cards-grid" style="margin-bottom:1rem;">
-                                <div class="option-select-card" onclick="selectSize('Small', '6-8 Servings', this)">
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeSize" value="Small">
                                     <span class="option-icon">🍰</span>
                                     <span class="option-name">Small</span>
                                     <span class="option-sub">6 - 8 servings</span>
-                                </div>
-                                <div class="option-select-card selected" onclick="selectSize('Medium', '12-16 Servings', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeSize" value="Medium" checked required>
                                     <span class="option-icon">🎂</span>
                                     <span class="option-name">Medium</span>
                                     <span class="option-sub">12 - 16 servings</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectSize('Large', '24-30 Servings', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeSize" value="Large">
                                     <span class="option-icon">🎁</span>
                                     <span class="option-name">Large</span>
                                     <span class="option-sub">24 - 30 servings</span>
-                                </div>
-                                <div class="option-select-card" onclick="selectSize('Custom Servings', 'Custom count', this)">
+                                </label>
+                                <label class="option-select-card">
+                                    <input type="radio" name="cakeSize" value="Custom Servings">
                                     <span class="option-icon">👥</span>
                                     <span class="option-name">Custom</span>
-                                    <span class="option-sub">Enter servings</span>
-                                </div>
-                            </div>
-                            <div id="customServingsInputWrap" style="display:none; margin-top:0.75rem;">
-                                <label class="builder-label" for="customServingsNum">Enter Desired Servings Count</label>
-                                <input type="number" id="customServingsNum" name="servings" class="builder-input" placeholder="e.g. 40" min="4" max="250" oninput="updateLiveTicket()">
+                                    <span class="option-sub">Add count in special requests</span>
+                                </label>
                             </div>
                         </div>
 
@@ -1544,11 +1652,11 @@
                             <div class="step-header">
                                 <span class="step-num-pill">6</span>
                                 <h3 class="step-title">Piped Cake Message</h3>
-                                <span class="step-hint">Live preview</span>
+                                <span class="step-hint">Optional</span>
                             </div>
                             <div class="builder-group">
                                 <label class="builder-label" for="cakeMessageInput">Cake Message (Piped on Top)</label>
-                                <input type="text" id="cakeMessageInput" name="cakeMessage" class="builder-input" placeholder="Happy Birthday..." maxlength="50" oninput="updateLiveTicket()">
+                                <input type="text" id="cakeMessageInput" name="cakeMessage" class="builder-input" placeholder="Happy Birthday..." maxlength="50">
                             </div>
                         </div>
 
@@ -1560,18 +1668,11 @@
                                 <span class="step-hint">Have a specific design?</span>
                             </div>
                             <div class="file-upload-box" id="fileUploadContainer">
-                                <input type="file" id="refImageFile" name="refImageFile" accept="image/png,image/jpeg,image/webp" onchange="handleImageUpload(event)">
+                                <input type="file" id="refImageFile" name="referenceImage" accept="image/png,image/jpeg,image/webp">
                                 <div id="uploadPlaceholder">
                                     <span style="font-size:2rem; display:block; margin-bottom:0.5rem;">📸</span>
                                     <strong style="color:var(--color-dark-roast);">Click or drag reference image here</strong>
                                     <div style="font-size:0.8rem; color:var(--color-dark-muted); margin-top:0.25rem;">PNG, JPG, or WEBP (Max 5MB)</div>
-                                </div>
-                                <div id="uploadPreview" style="display:none; align-items:center; justify-content:center; gap:0.75rem;">
-                                    <img id="uploadPreviewImg" src="" alt="Uploaded reference preview" style="width:60px; height:60px; border-radius:10px; object-fit:cover; border:1px solid #EADBCE;">
-                                    <div style="text-align:left;">
-                                        <div id="uploadFileName" style="font-weight:700; font-size:0.88rem; color:var(--color-dark-roast);"></div>
-                                        <button type="button" onclick="removeUploadedImage(event)" style="background:none; border:none; color:var(--color-strawberry); font-size:0.78rem; font-weight:700; cursor:pointer; padding:0;">Remove Image</button>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1584,45 +1685,80 @@
                                 <span class="step-hint">Required info</span>
                             </div>
                             <div class="form-row-2">
-                                <div class="builder-group">
-                                    <label class="builder-label" for="eventOccasion">Occasion *</label>
-                                    <select id="eventOccasion" name="occasion" class="builder-select" onchange="updateLiveTicket()" required>
-                                        <option value="Birthday" selected>Birthday</option>
-                                        <option value="Wedding">Wedding</option>
-                                        <option value="Anniversary">Anniversary</option>
-                                        <option value="Graduation">Graduation</option>
-                                        <option value="Other">Other Celebration</option>
-                                    </select>
-                                </div>
+                                <fieldset class="builder-group">
+                                    <legend class="builder-label">Occasion *</legend>
+                                    <div class="option-cards-grid">
+                                        <label class="option-select-card">
+                                            <input type="radio" name="occasion" value="Birthday" checked required>
+                                            <span class="option-icon">🎂</span>
+                                            <span class="option-name">Birthday</span>
+                                        </label>
+                                        <label class="option-select-card">
+                                            <input type="radio" name="occasion" value="Wedding">
+                                            <span class="option-icon">💍</span>
+                                            <span class="option-name">Wedding</span>
+                                        </label>
+                                        <label class="option-select-card">
+                                            <input type="radio" name="occasion" value="Anniversary">
+                                            <span class="option-icon">💐</span>
+                                            <span class="option-name">Anniversary</span>
+                                        </label>
+                                        <label class="option-select-card">
+                                            <input type="radio" name="occasion" value="Graduation">
+                                            <span class="option-icon">🎓</span>
+                                            <span class="option-name">Graduation</span>
+                                        </label>
+                                        <label class="option-select-card">
+                                            <input type="radio" name="occasion" value="Other">
+                                            <span class="option-icon">✨</span>
+                                            <span class="option-name">Other</span>
+                                        </label>
+                                    </div>
+                                </fieldset>
                                 <div class="builder-group">
                                     <label class="builder-label" for="requiredDate">Required Date *</label>
-                                    <input type="date" id="requiredDate" name="requiredDate" class="builder-input" required onchange="updateLiveTicket()">
+                                    <input type="date" id="requiredDate" name="requiredDate" class="builder-input" required>
                                 </div>
                             </div>
 
                             <div class="form-row-2">
-                                <div class="builder-group">
-                                    <label class="builder-label" for="preferredTime">Preferred Time *</label>
-                                    <select id="preferredTime" name="preferredTime" class="builder-select" onchange="updateLiveTicket()">
-                                        <option value="Morning (9:00 AM - 12:00 PM)">Morning (9:00 AM - 12:00 PM)</option>
-                                        <option value="Afternoon (12:00 PM - 4:00 PM)" selected>Afternoon (12:00 PM - 4:00 PM)</option>
-                                        <option value="Evening (4:00 PM - 7:00 PM)">Evening (4:00 PM - 7:00 PM)</option>
-                                    </select>
-                                </div>
+                                <fieldset class="builder-group">
+                                    <legend class="builder-label">Preferred Time</legend>
+                                    <div class="option-cards-grid">
+                                        <label class="option-select-card">
+                                            <input type="radio" name="preferredTime" value="Morning (9:00 AM - 12:00 PM)">
+                                            <span class="option-icon">🌅</span>
+                                            <span class="option-name">Morning</span>
+                                            <span class="option-sub">9 AM - 12 PM</span>
+                                        </label>
+                                        <label class="option-select-card">
+                                            <input type="radio" name="preferredTime" value="Afternoon (12:00 PM - 4:00 PM)" checked>
+                                            <span class="option-icon">☀️</span>
+                                            <span class="option-name">Afternoon</span>
+                                            <span class="option-sub">12 PM - 4 PM</span>
+                                        </label>
+                                        <label class="option-select-card">
+                                            <input type="radio" name="preferredTime" value="Evening (4:00 PM - 7:00 PM)">
+                                            <span class="option-icon">🌇</span>
+                                            <span class="option-name">Evening</span>
+                                            <span class="option-sub">4 PM - 7 PM</span>
+                                        </label>
+                                    </div>
+                                </fieldset>
                                 <div class="builder-group">
                                     <label class="builder-label" for="customerName">Customer Name *</label>
-                                    <input type="text" id="customerName" name="customerName" class="builder-input" placeholder="e.g. Kasun Perera" required oninput="updateLiveTicket()">
+                                    <input type="text" id="customerName" name="name" class="builder-input" placeholder="e.g. Kasun Perera" required>
                                 </div>
                             </div>
 
                             <div class="form-row-2">
                                 <div class="builder-group">
                                     <label class="builder-label" for="contactNumber">Contact Phone Number *</label>
-                                    <input type="tel" id="contactNumber" name="contactNumber" class="builder-input" placeholder="e.g. 077 123 4567" required oninput="updateLiveTicket()">
+                                    <input type="tel" id="contactNumber" name="phoneNumber" class="builder-input" placeholder="e.g. 077 123 4567" required>
                                 </div>
                                 <div class="builder-group">
                                     <label class="builder-label" for="customerEmail">Email Address *</label>
-                                    <input type="email" id="customerEmail" name="email" class="builder-input" placeholder="e.g. kasun@example.com" required oninput="updateLiveTicket()">
+                                    <input type="email" id="customerEmail" name="email" class="builder-input" placeholder="e.g. kasun@example.com" required>
                                 </div>
                             </div>
                         </div>
@@ -1635,31 +1771,39 @@
                                 <span class="step-hint">Step 9 of 9</span>
                             </div>
 
-                            <div class="pill-toggle-wrap">
-                                <div class="pill-toggle-item">
-                                    <input type="radio" id="optPickup" name="pickupOrDelivery" value="Pickup" checked onchange="toggleDeliveryMode('Pickup')">
-                                    <label class="pill-toggle-label" for="optPickup">🏪 Bakery Pickup (Free)</label>
+                            <fieldset class="builder-group">
+                                <legend class="builder-label">Fulfillment *</legend>
+                                <div class="option-cards-grid">
+                                    <label class="option-select-card">
+                                        <input type="radio" id="optPickup" name="fulfillmentMethod" value="Pickup" checked required>
+                                        <span class="option-icon">🏪</span>
+                                        <span class="option-name">Bakery Pickup</span>
+                                        <span class="option-sub">Free</span>
+                                    </label>
+                                    <label class="option-select-card">
+                                        <input type="radio" id="optDelivery" name="fulfillmentMethod" value="Delivery">
+                                        <span class="option-icon">🚚</span>
+                                        <span class="option-name">Chilled Delivery</span>
+                                        <span class="option-sub">+Rs. 600</span>
+                                    </label>
                                 </div>
-                                <div class="pill-toggle-item">
-                                    <input type="radio" id="optDelivery" name="pickupOrDelivery" value="Delivery" onchange="toggleDeliveryMode('Delivery')">
-                                    <label class="pill-toggle-label" for="optDelivery">🚚 Chilled Delivery (+Rs. 600)</label>
-                                </div>
-                            </div>
+                            </fieldset>
 
                             <!-- Conditional Delivery Address Field -->
-                            <div id="deliveryAddressWrap" style="display:none; margin-top:1.25rem;">
+                            <div id="deliveryAddressWrap" style="margin-top:1.25rem;">
                                 <label class="builder-label" for="deliveryAddress">Delivery Address (Sri Lanka) *</label>
-                                <textarea id="deliveryAddress" name="deliveryAddress" rows="2" class="builder-textarea" placeholder="Street address, city, and nearest landmark..." oninput="updateLiveTicket()"></textarea>
+                                <textarea id="deliveryAddress" name="address" rows="2" class="builder-textarea" placeholder="Street address, city, and nearest landmark..."></textarea>
                             </div>
 
                             <div class="builder-group" style="margin-top:1.25rem;">
                                 <label class="builder-label" for="bookingNotes">Dietary Notes / Special Instructions</label>
-                                <textarea id="bookingNotes" name="notes" rows="2" class="builder-textarea" placeholder="e.g. Eggless, less sugar, edible gold leaves, include birthday candles..."></textarea>
+                                <textarea id="bookingNotes" name="specialRequests" rows="2" class="builder-textarea" placeholder="e.g. Eggless, less sugar, edible gold leaves, include birthday candles... For custom servings, include the count here."></textarea>
                             </div>
                         </div>
 
-                        <div style="display:none;">
-                            <button type="submit" id="hiddenFormSubmit"></button>
+                        <div class="builder-group">
+                            <label class="builder-label" for="orderComments">Comments for the bakery team</label>
+                            <textarea id="orderComments" name="comments" rows="2" class="builder-textarea" placeholder="Optional comments about your order..."></textarea>
                         </div>
                     </form>
                 </div>
@@ -1668,57 +1812,55 @@
                 <aside class="sticky-summary-sidebar">
                     <div class="booking-summary-ticket">
                         <div class="ticket-header">
-                            <span class="ticket-badge">✨ Live Booking Ticket</span>
+                            <span class="ticket-badge">✨ Booking Review</span>
                             <div class="ticket-cake-preview-box">
-                                <img src="3-orader bakery items or custom cake booking/base.png" alt="Cake shape preview" id="ticketPreviewImg">
+                                <img src="3-orader bakery items or custom cake booking/base.png" alt="Custom cake example">
                             </div>
-                            <h3 class="ticket-cake-name" id="ticketCakeTitle">Round Vanilla Cake</h3>
-                            <div class="ticket-piping-preview" id="ticketPipingText">"Happy Birthday..."</div>
+                            <h3 class="ticket-cake-name">Custom cake order</h3>
+                            <div class="ticket-piping-preview">Your selected cake details will be sent to our bakery team.</div>
                         </div>
 
                         <div class="ticket-body">
                             <div class="ticket-spec-row">
                                 <span class="ticket-spec-label">Shape</span>
-                                <span class="ticket-spec-val" id="specShape">Round</span>
+                                <span class="ticket-spec-val">Included in your order</span>
                             </div>
                             <div class="ticket-spec-row">
                                 <span class="ticket-spec-label">Flavor</span>
-                                <span class="ticket-spec-val" id="specFlavor">Vanilla</span>
+                                <span class="ticket-spec-val">Included in your order</span>
                             </div>
                             <div class="ticket-spec-row">
                                 <span class="ticket-spec-label">Filling</span>
-                                <span class="ticket-spec-val" id="specFilling">Vanilla Cream</span>
+                                <span class="ticket-spec-val">Included in your order</span>
                             </div>
                             <div class="ticket-spec-row">
                                 <span class="ticket-spec-label">Decoration</span>
-                                <span class="ticket-spec-val" id="specDecor">Floral Style</span>
+                                <span class="ticket-spec-val">Included in your order</span>
                             </div>
                             <div class="ticket-spec-row">
                                 <span class="ticket-spec-label">Size / Servings</span>
-                                <span class="ticket-spec-val" id="specSize">Medium (12-16)</span>
+                                <span class="ticket-spec-val">Included in your order</span>
                             </div>
                             <div class="ticket-spec-row">
                                 <span class="ticket-spec-label">Occasion</span>
-                                <span class="ticket-spec-val" id="specOccasion">Birthday</span>
+                                <span class="ticket-spec-val">Included in your order</span>
                             </div>
                             <div class="ticket-spec-row">
                                 <span class="ticket-spec-label">Required Date</span>
-                                <span class="ticket-spec-val" id="specDate">Tomorrow</span>
+                                <span class="ticket-spec-val">Included in your order</span>
                             </div>
                             <div class="ticket-spec-row">
                                 <span class="ticket-spec-label">Fulfillment</span>
-                                <span class="ticket-spec-val" id="specFulfill">Pickup</span>
+                                <span class="ticket-spec-val">Pickup or delivery</span>
                             </div>
 
-                            <!-- Live Price Breakdown -->
                             <div class="ticket-price-box">
-                                <div class="ticket-price-label">Estimated Price</div>
-                                <div class="ticket-price-amount" id="ticketPriceAmount">Rs. 6,800</div>
-                                <div class="ticket-price-note">Includes custom decor &amp; personalized piping</div>
+                                <div class="ticket-price-label">Price</div>
+                                <div class="ticket-price-amount">Confirmed by our bakery</div>
+                                <div class="ticket-price-note">We will contact you with the final estimate.</div>
                             </div>
 
-                            <!-- Book Custom Cake Button -->
-                            <button type="button" class="btn-book-submit" onclick="submitCustomCakeBooking()" id="btnBookCustomCakeSubmit">
+                            <button type="submit" form="customCakeForm" class="btn-book-submit">
                                 <span>🎂</span>
                                 <span>Book Custom Cake</span>
                             </button>
@@ -2112,6 +2254,7 @@
                     const price = Number(item.price);
                     if (!item.id || !Number.isFinite(price) || price < 0) return;
 
+                    const availability = String(item.availability || '').trim().toLowerCase();
                     READY_MADE_CAKES.push({
                         id: `ADMIN-${String(item.id).replace(/[^a-zA-Z0-9_-]/g, '')}`,
                         name: item.name || 'Bakery item',
@@ -2121,7 +2264,8 @@
                         price,
                         image: item.imageUrl || '',
                         servings: item.size || 'Size not specified',
-                        category: item.category || ''
+                        category: item.category || '',
+                        available: availability === 'available'
                     });
                 });
                 renderReadyMadeCakes();
@@ -2148,6 +2292,8 @@
                     <div class="cake-card-body">
                         <span class="cake-flavor-tag">Flavor: ${escapeHtml(cake.flavor)}</span>
                         ${cake.category ? `<span class="cake-flavor-tag">Category: ${escapeHtml(cake.category)}</span>` : ''}
+                        <span class="cake-availability${cake.available ? '' : ' unavailable'}"
+                              role="status">${cake.available ? 'Available' : 'Unavailable'}</span>
                         <h3 class="cake-card-name">${escapeHtml(cake.name)}</h3>
                         <p class="cake-card-desc">${escapeHtml(cake.desc)}</p>
                         
@@ -2158,13 +2304,13 @@
 
                         <div class="cake-card-actions">
                             <div class="qty-stepper">
-                                <button type="button" class="qty-stepper-btn" onclick="adjustQty('${cake.id}', -1)" aria-label="Decrease quantity">-</button>
+                                <button type="button" class="qty-stepper-btn" onclick="adjustQty('${cake.id}', -1)" aria-label="Decrease quantity" ${cake.available ? '' : 'disabled'}>-</button>
                                 <input type="text" class="qty-stepper-input" id="qty-${cake.id}" value="1" readonly>
-                                <button type="button" class="qty-stepper-btn" onclick="adjustQty('${cake.id}', 1)" aria-label="Increase quantity">+</button>
+                                <button type="button" class="qty-stepper-btn" onclick="adjustQty('${cake.id}', 1)" aria-label="Increase quantity" ${cake.available ? '' : 'disabled'}>+</button>
                             </div>
-                            <button type="button" class="btn-cake-add" onclick="addCakeToCart('${cake.id}', 'ready')" id="btn-add-${cake.id}">
+                            <button type="button" class="btn-cake-add" onclick="addCakeToCart('${cake.id}', 'ready')" id="btn-add-${cake.id}" ${cake.available ? '' : 'disabled'}>
                                 <span>🛒</span>
-                                <span>Add to Cart</span>
+                                <span>${cake.available ? 'Add to Cart' : 'Unavailable'}</span>
                             </button>
                         </div>
                     </div>
@@ -2236,6 +2382,10 @@
                 item = BIRTHDAY_CAKES.find(c => c.id === id);
             }
             if (!item) return;
+            if (type === 'ready' && !item.available) {
+                showToast(`${item.name} is currently unavailable.`);
+                return;
+            }
 
             const input = document.getElementById('qty-' + id);
             const count = input ? (parseInt(input.value) || 1) : 1;
@@ -2259,330 +2409,6 @@
 
             showToast(`Added to cart: ${item.name} (x${count})`);
             renderCartDrawer();
-        }
-
-        // --------------------------------------------------------------------------
-        // Custom Cake Builder State
-        // --------------------------------------------------------------------------
-        const builderState = {
-            shape: 'Round',
-            flavor: 'Vanilla',
-            filling: 'Vanilla Cream',
-            decoration: 'Floral Style',
-            size: 'Medium',
-            servingsLabel: '12 - 16 servings',
-            cakeMessage: '',
-            occasion: 'Birthday',
-            date: '',
-            time: 'Afternoon (12:00 PM - 4:00 PM)',
-            customerName: '',
-            phone: '',
-            email: '',
-            pickupOrDelivery: 'Pickup',
-            deliveryAddress: '',
-            refImage: 'Customise cake/Round Vanila cake.png'
-        };
-
-        function selectShape(shapeName, sampleImg, cardEl) {
-            builderState.shape = shapeName;
-            builderState.refImage = sampleImg;
-            document.getElementById('formShapeVal').value = shapeName;
-            document.getElementById('formRefImageUrl').value = sampleImg;
-
-            const container = document.getElementById('builderStep1');
-            container.querySelectorAll('.option-select-card').forEach(c => c.classList.remove('selected'));
-            if (cardEl) cardEl.classList.add('selected');
-
-            updateCakePreviewImage();
-            updateLiveTicket();
-        }
-
-        function selectFlavor(flavorName, cardEl) {
-            builderState.flavor = flavorName;
-            document.getElementById('formFlavorVal').value = flavorName;
-
-            const container = document.getElementById('builderStep2');
-            container.querySelectorAll('.option-select-card').forEach(c => c.classList.remove('selected'));
-            if (cardEl) cardEl.classList.add('selected');
-
-            // Dynamically pick preview image if available
-            updateCakePreviewImage();
-            updateLiveTicket();
-        }
-
-        function selectFilling(fillingName, cardEl) {
-            builderState.filling = fillingName;
-            document.getElementById('formFillingVal').value = fillingName;
-
-            const container = document.getElementById('builderStep3');
-            container.querySelectorAll('.option-select-card').forEach(c => c.classList.remove('selected'));
-            if (cardEl) cardEl.classList.add('selected');
-
-            updateLiveTicket();
-        }
-
-        function selectDecoration(decorName, cardEl) {
-            builderState.decoration = decorName;
-            document.getElementById('formDecorationVal').value = decorName;
-
-            const container = document.getElementById('builderStep4');
-            container.querySelectorAll('.option-select-card').forEach(c => c.classList.remove('selected'));
-            if (cardEl) cardEl.classList.add('selected');
-
-            updateLiveTicket();
-        }
-
-        function selectSize(sizeName, servingsLabel, cardEl) {
-            builderState.size = sizeName;
-            builderState.servingsLabel = servingsLabel;
-            document.getElementById('formSizeVal').value = sizeName;
-
-            const container = document.getElementById('builderStep5');
-            container.querySelectorAll('.option-select-card').forEach(c => c.classList.remove('selected'));
-            if (cardEl) cardEl.classList.add('selected');
-
-            const customWrap = document.getElementById('customServingsInputWrap');
-            if (sizeName === 'Custom Servings') {
-                if (customWrap) customWrap.style.display = 'block';
-            } else {
-                if (customWrap) customWrap.style.display = 'none';
-            }
-
-            updateLiveTicket();
-        }
-
-        function toggleDeliveryMode(mode) {
-            builderState.pickupOrDelivery = mode;
-            const addrWrap = document.getElementById('deliveryAddressWrap');
-            const addrInput = document.getElementById('deliveryAddress');
-            if (mode === 'Delivery') {
-                if (addrWrap) addrWrap.style.display = 'block';
-                if (addrInput) addrInput.required = true;
-            } else {
-                if (addrWrap) addrWrap.style.display = 'none';
-                if (addrInput) addrInput.required = false;
-            }
-            updateLiveTicket();
-        }
-
-        function handleImageUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const previewImg = document.getElementById('uploadPreviewImg');
-                const nameLabel = document.getElementById('uploadFileName');
-                const previewBox = document.getElementById('uploadPreview');
-                const placeholder = document.getElementById('uploadPlaceholder');
-
-                if (previewImg) previewImg.src = evt.target.result;
-                if (nameLabel) nameLabel.textContent = file.name;
-                if (placeholder) placeholder.style.display = 'none';
-                if (previewBox) previewBox.style.display = 'flex';
-
-                // Reflect on ticket preview
-                const ticketImg = document.getElementById('ticketPreviewImg');
-                if (ticketImg) ticketImg.src = evt.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function removeUploadedImage(e) {
-            e.stopPropagation();
-            const fileInput = document.getElementById('refImageFile');
-            if (fileInput) fileInput.value = '';
-
-            const placeholder = document.getElementById('uploadPlaceholder');
-            const previewBox = document.getElementById('uploadPreview');
-            if (placeholder) placeholder.style.display = 'block';
-            if (previewBox) previewBox.style.display = 'none';
-
-            updateCakePreviewImage();
-        }
-
-        function updateCakePreviewImage() {
-            // Find existing matching image in "Customise cake"
-            let targetImg = 'Customise cake/Round Vanila cake.png';
-            if (builderState.shape === 'Round') {
-                if (builderState.flavor === 'Chocolate') targetImg = 'Customise cake/Round chocolate cake.png';
-                else if (builderState.flavor === 'Strawberry') targetImg = 'Customise cake/Round strawberry cake.png';
-                else if (builderState.flavor === 'Red Velvet') targetImg = 'Customise cake/Round red velvet cake.png';
-                else targetImg = 'Customise cake/Round Vanila cake.png';
-            } else if (builderState.shape === 'Square') {
-                if (builderState.flavor === 'Chocolate') targetImg = 'Customise cake/Square chocolate cake.png';
-                else if (builderState.flavor === 'Strawberry') targetImg = 'Customise cake/Square Strawberry cake.png';
-                else if (builderState.flavor === 'Black Forest') targetImg = 'Customise cake/Square black forest cake.png';
-                else targetImg = 'Customise cake/Square vanila cake.png';
-            } else if (builderState.shape === 'Heart') {
-                if (builderState.flavor === 'Chocolate') targetImg = 'Customise cake/Heart chocolate cake.png';
-                else if (builderState.flavor === 'Strawberry') targetImg = 'Customise cake/Heart Straberry cake.png';
-                else if (builderState.flavor === 'Red Velvet') targetImg = 'Customise cake/Heart red velvet cake.png';
-                else targetImg = 'Customise cake/Heart Vanila cake.png';
-            } else if (builderState.shape === 'Tiered') {
-                targetImg = '3-orader bakery items or custom cake booking/base.png';
-            }
-
-            builderState.refImage = targetImg;
-            document.getElementById('formRefImageUrl').value = targetImg;
-
-            const ticketImg = document.getElementById('ticketPreviewImg');
-            if (ticketImg) ticketImg.src = cakeImageUrl(targetImg);
-        }
-
-        function updateLiveTicket() {
-            // Read inputs
-            const msgInput = document.getElementById('cakeMessageInput');
-            const occInput = document.getElementById('eventOccasion');
-            const dateInput = document.getElementById('requiredDate');
-            const nameInput = document.getElementById('customerName');
-            const timeInput = document.getElementById('preferredTime');
-
-            builderState.cakeMessage = msgInput ? msgInput.value.trim() : '';
-            builderState.occasion = occInput ? occInput.value : 'Birthday';
-            builderState.date = dateInput ? dateInput.value : '';
-            builderState.time = timeInput ? timeInput.value : '';
-            builderState.customerName = nameInput ? nameInput.value.trim() : '';
-
-            // Update ticket text elements
-            const titleEl = document.getElementById('ticketCakeTitle');
-            if (titleEl) titleEl.textContent = `${builderState.shape} ${builderState.flavor} Cake`;
-
-            const pipingEl = document.getElementById('ticketPipingText');
-            if (pipingEl) {
-                pipingEl.textContent = builderState.cakeMessage ? `"${builderState.cakeMessage}"` : '“Happy Birthday...”';
-            }
-
-            const specShape = document.getElementById('specShape');
-            if (specShape) specShape.textContent = builderState.shape;
-
-            const specFlavor = document.getElementById('specFlavor');
-            if (specFlavor) specFlavor.textContent = builderState.flavor;
-
-            const specFilling = document.getElementById('specFilling');
-            if (specFilling) specFilling.textContent = builderState.filling;
-
-            const specDecor = document.getElementById('specDecor');
-            if (specDecor) specDecor.textContent = builderState.decoration;
-
-            const specSize = document.getElementById('specSize');
-            if (specSize) {
-                if (builderState.size === 'Custom Servings') {
-                    const customNum = document.getElementById('customServingsNum');
-                    const num = customNum ? customNum.value : '40';
-                    specSize.textContent = `Custom (${num || '40'} Servings)`;
-                } else {
-                    specSize.textContent = `${builderState.size} (${builderState.servingsLabel})`;
-                }
-            }
-
-            const specOccasion = document.getElementById('specOccasion');
-            if (specOccasion) specOccasion.textContent = builderState.occasion;
-
-            const specDate = document.getElementById('specDate');
-            if (specDate) specDate.textContent = builderState.date || 'Choose Date';
-
-            const specFulfill = document.getElementById('specFulfill');
-            if (specFulfill) specFulfill.textContent = builderState.pickupOrDelivery;
-
-            // Live Price Calculation in Sri Lankan Rupees (Rs.)
-            let basePrice = 4500;
-            if (builderState.size === 'Medium') basePrice = 6800;
-            else if (builderState.size === 'Large') basePrice = 10500;
-            else if (builderState.size === 'Custom Servings') {
-                const customNum = document.getElementById('customServingsNum');
-                const num = customNum ? (parseInt(customNum.value) || 35) : 35;
-                basePrice = 4500 + (num * 250);
-            }
-
-            // Shape modifiers
-            if (builderState.shape === 'Square') basePrice += 300;
-            else if (builderState.shape === 'Heart') basePrice += 500;
-            else if (builderState.shape === 'Tiered') basePrice += 4000;
-
-            // Flavor & filling modifiers
-            if (builderState.flavor === 'Red Velvet') basePrice += 400;
-            else if (builderState.flavor === 'Black Forest') basePrice += 500;
-            if (builderState.filling === 'Chocolate Ganache') basePrice += 300;
-
-            // Delivery fee
-            if (builderState.pickupOrDelivery === 'Delivery') {
-                basePrice += 600;
-            }
-
-            const priceEl = document.getElementById('ticketPriceAmount');
-            if (priceEl) priceEl.textContent = `Rs. ${basePrice.toLocaleString()}`;
-
-            const hiddenPrice = document.getElementById('formEstimatedPrice');
-            if (hiddenPrice) hiddenPrice.value = basePrice.toFixed(2);
-        }
-
-        function submitCustomCakeBooking() {
-            // Trigger validation on customCakeForm
-            const form = document.getElementById('customCakeForm');
-            if (!form) return;
-
-            // Validate mandatory fields
-            const custName = document.getElementById('customerName');
-            const custPhone = document.getElementById('contactNumber');
-            const custEmail = document.getElementById('customerEmail');
-            const reqDate = document.getElementById('requiredDate');
-
-            if (!custName || !custName.value.trim()) {
-                alert('Please enter Customer Name.');
-                custName.focus();
-                return;
-            }
-            if (!custPhone || !custPhone.value.trim()) {
-                alert('Please enter a Contact Phone Number.');
-                custPhone.focus();
-                return;
-            }
-            if (!custEmail || !custEmail.value.trim() || !custEmail.checkValidity()) {
-                alert('Please enter a valid Email Address.');
-                custEmail.focus();
-                return;
-            }
-            if (!reqDate || !reqDate.value) {
-                alert('Please select the Required Date for your cake.');
-                reqDate.focus();
-                return;
-            }
-
-            if (builderState.pickupOrDelivery === 'Delivery') {
-                const deliveryAddr = document.getElementById('deliveryAddress');
-                if (!deliveryAddr || !deliveryAddr.value.trim()) {
-                    alert('Please enter your Delivery Address for chilled delivery.');
-                    deliveryAddr.focus();
-                    return;
-                }
-            }
-
-            form.requestSubmit();
-        }
-
-        async function handleCustomCakeSubmit(e) {
-            e.preventDefault();
-            const form = e.currentTarget;
-            const submitButton = document.getElementById('btnBookCustomCakeSubmit');
-            if (submitButton) submitButton.disabled = true;
-
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: new FormData(form)
-                });
-                if (!response.ok) {
-                    const message = await response.text();
-                    throw new Error(message || `Booking failed (${response.status}).`);
-                }
-                showToast('Your cake booking was submitted successfully.');
-            } catch (error) {
-                showToast(error.message || 'Unable to submit your booking. Please try again.');
-            } finally {
-                if (submitButton) submitButton.disabled = false;
-            }
-            return false;
         }
 
         // --------------------------------------------------------------------------
@@ -2729,43 +2555,12 @@
             BIRTHDAY_CAKES.length = 0;
             loadStorefrontItems();
 
-            // Set minimum required date to tomorrow
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const yyyy = tomorrow.getFullYear();
-            const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
-            const dd = String(tomorrow.getDate()).padStart(2, '0');
-            const minDateStr = `${yyyy}-${mm}-${dd}`;
-
-            const dateInput = document.getElementById('requiredDate');
-            if (dateInput) {
-                dateInput.min = minDateStr;
-                dateInput.value = minDateStr;
-                builderState.date = minDateStr;
-            }
-
-            // Check query param (e.g. ?occasion=Wedding or ?shape=Heart)
             const urlParams = new URLSearchParams(window.location.search);
-            const occParam = urlParams.get('occasion');
-            if (occParam) {
-                const sel = document.getElementById('eventOccasion');
-                if (sel) {
-                    for (let i = 0; i < sel.options.length; i++) {
-                        if (sel.options[i].value.toLowerCase().includes(occParam.toLowerCase())) {
-                            sel.selectedIndex = i;
-                            builderState.occasion = sel.options[i].value;
-                            break;
-                        }
-                    }
-                }
-            }
-
             const shapeParam = urlParams.get('shape');
             if (shapeParam) {
                 filterShapeGroup(shapeParam + ' Cake');
             }
 
-            updateLiveTicket();
 
             // Smooth scroll to birthday cakes section if visited with #birthday-cakes hash
             if (window.location.hash === '#birthday-cakes' || window.location.hash === '#birthday-cakes-section') {
